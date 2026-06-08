@@ -273,15 +273,20 @@ class AdminDashboardWidget(
             return
         row = self.users_table.currentRow()
         user_name = self.users_table.item(row, 0).text()
-        role_name = self.users_table.item(row, 3).text()
-        is_employee = role_name == ROLE_NAMES[EMPLOYEE_ROLE_ID]
-        if not confirm_deactivate_user(self, user_name, is_employee=is_employee):
+        role_id = self.users_table.item(row, 3).data(Qt.ItemDataRole.UserRole)
+        is_employee = role_id == EMPLOYEE_ROLE_ID
+        is_department_head = role_id == DEPT_HEAD_ROLE_ID
+        if not confirm_deactivate_user(
+            self,
+            user_name,
+            is_employee=is_employee or is_department_head,
+        ):
             return
         try:
             self.user_service.deactivate_user(self.actor_user.id, user_id)
             done_msg = (
-                "Сотрудник полностью удалён"
-                if is_employee
+                "Пользователь полностью удалён"
+                if is_employee or is_department_head
                 else "Пользователь удалён"
             )
             QMessageBox.information(self, "Готово", done_msg)

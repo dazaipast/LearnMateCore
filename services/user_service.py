@@ -88,16 +88,12 @@ class UserService:
             return False
         if target.role_id == MAIN_ADMIN_ROLE_ID:
             return False
-        if target.role_id == EMPLOYEE_ROLE_ID:
-            if actor.is_role('main_admin'):
-                return True
-            if actor.is_role('department_head'):
-                return target.department_id == actor.department_id
-            return False
-        if not target.is_active:
-            return False
         if actor.is_role('main_admin'):
             return True
+        if not target.is_active:
+            return False
+        if target.role_id == EMPLOYEE_ROLE_ID and actor.is_role('department_head'):
+            return target.department_id == actor.department_id
         return False
 
     def can_change_department(self, actor, target):
@@ -122,12 +118,10 @@ class UserService:
 
             if target.role_id == EMPLOYEE_ROLE_ID:
                 self._hard_delete_employee(db, actor, target)
+            elif target.role_id == DEPT_HEAD_ROLE_ID:
+                self._hard_delete_department_head(db, actor, target)
             else:
                 target.is_active = False
-                if target.role_id == DEPT_HEAD_ROLE_ID:
-                    dept = db.query(Department).filter(Department.head_id == target.id).first()
-                    if dept:
-                        dept.head_id = None
                 db.add(AuditLog(
                     user_id=actor.id,
                     department_id=target.department_id,
@@ -159,6 +153,36 @@ class UserService:
             details=(
                 f"Удалён: {target.full_name} | {ROLE_NAMES[target.role_id]} | "
                 f"отдел: {department_name} | снято назначений: {removed_courses}"
+            ),
+        ))
+        db.delete(target)
+
+    def _hard_delete_department_head(self, db, actor, target):
+        dept = db.query(Department).filter(Department.head_id == target.id).first()
+        if dept:
+            dept.head_id = None
+
+        db.query(User).filter(User.manager_id == target.id).update(
+            {User.manager_id: actor.id},
+            synchronize_session=False,
+        )
+        db.query(Course).filter(Course.creator_id == target.id).update(
+            {Course.creator_id: actor.id},
+            synchronize_session=False,
+        )
+        db.query(UserCourse).filter(UserCourse.user_id == target.id).delete(
+            synchronize_session=False
+        )
+        db.query(AuditLog).filter(AuditLog.user_id == target.id).delete(synchronize_session=False)
+
+        department_name = target.department.name if target.department else "—"
+        db.add(AuditLog(
+            user_id=actor.id,
+            department_id=target.department_id,
+            action="delete_user",
+            details=(
+                f"Удалён: {target.full_name} | {ROLE_NAMES[target.role_id]} | "
+                f"отдел: {department_name}"
             ),
         ))
         db.delete(target)

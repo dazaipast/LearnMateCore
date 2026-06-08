@@ -50,7 +50,9 @@ def fill_users_table(table, users):
         table.setItem(row, 0, name_item)
         table.setItem(row, 1, QTableWidgetItem(user.position))
         table.setItem(row, 2, QTableWidgetItem(user.department.name if user.department else ""))
-        table.setItem(row, 3, QTableWidgetItem(user.role.name if user.role else ""))
+        role_item = QTableWidgetItem(user.role.name if user.role else "")
+        role_item.setData(Qt.ItemDataRole.UserRole, user.role_id)
+        table.setItem(row, 3, role_item)
         table.setItem(row, 4, QTableWidgetItem(user.email))
         table.setItem(row, 5, QTableWidgetItem("Активен" if user.is_active else "Неактивен"))
 
