@@ -2,13 +2,20 @@ from sqlalchemy.orm import joinedload
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget,
     QTableWidgetItem, QMessageBox, QGroupBox, QListWidget, QScrollArea,
+    QProgressBar,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+from constants import HISTORY_HEADERS
 from models import User, UserCourse, Course
-from utils import format_percent, course_pass_status
-from ui.table_helpers import configure_readonly_table, fill_text_list, fill_history_table
+from utils import format_percent, course_pass_status, split_employee_progress
+from ui.table_helpers import (
+    configure_readonly_table,
+    fill_text_list,
+    fill_history_table,
+    get_selected_course_id,
+)
 from ui.dialogs import open_course_passing_dialog, show_course_details
 
 EMPLOYEE_COURSE_HEADERS = ["Название", "Прогресс", "Срок (дн.)", "Порог %", "Статус"]
