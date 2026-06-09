@@ -1,3 +1,4 @@
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -9,7 +10,13 @@ from models import (
 )
 from utils import infer_course_type_from_title
 
-APP_DIR = Path(__file__).resolve().parent
+def _resolve_app_dir():
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+APP_DIR = _resolve_app_dir()
 MATERIALS_DIR = APP_DIR / "course_materials"
 
 
